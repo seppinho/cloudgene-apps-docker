@@ -3,7 +3,7 @@ name: UM Imputationserver
 apps:
   - id: wordcount
     permission: user
-    filename: wordcount/wordcount-mr-step.yaml
+    filename: apps/wordcount/wordcount-mr-step.yaml
 hadoopPath: /usr
 hdfsWorkspace: cloudgene-workspace
 localWorkspace: cloudgene-workspace

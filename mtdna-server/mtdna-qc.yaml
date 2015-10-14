@@ -1,0 +1,60 @@
+name: Data Preprocessing (Optional)
+description: This tool provides a simple base quality check for your FastQ and BAM data. 
+version: 1.0.0
+website: http://cloudgene.uibk.ac.at
+category: Exome
+author: Sebastian Schoenherr
+
+cluster:
+  image: us-east-1/ami-da0cf8b3
+  type: m1.large,m1.xlarge
+  ports: 80,50030,50070
+  service: hadoop
+  installMapred: true
+ 
+mapred:
+
+  setup:
+    name: Input Validator
+    jar: mtdna-heteroplasmy.jar
+    classname: heteroplasmy.validator.InputValidation
+    
+  steps:
+
+  - name: Calculating Base Quality
+    classname: preprocess.mr.QCTool
+    jar: mtdna-heteroplasmy.jar
+    generates: $out
+  - name: Generate graphs
+    rmd: fastq-report.Rmd
+    params: $out
+    output: ${report}.html
+    
+  inputs:
+    - id: input
+      description: Fastq Folder
+      type: hdfs-folder
+    - id: inType
+      description: Input Format
+      type: list
+      required: true
+      values:
+        se: FastQ data
+        bam: SAM/BAM data  
+
+    - id: fileSize
+      description: Filesize to upload
+      type: number
+      value: 2048
+      visible: false
+
+  outputs:
+    - id: out
+      description: Output Folder Local
+      type: hdfs-folder
+      download: true
+      zip: false
+    - id: report
+      description: Quality Report
+      type: local-file
+      download: true   

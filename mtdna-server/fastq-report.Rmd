@@ -1,0 +1,43 @@
+# Base Quality Statistics
+
+
+```{r echo=FALSE}
+
+suppressPackageStartupMessages(library(ggplot2))
+
+
+args <- commandArgs(trailingOnly = TRUE)
+
+baseQualFile <- args[1]
+
+
+if(file.exists(baseQualFile)){
+	baseQua = read.table(baseQualFile, header = FALSE, sep="\t");
+    names(baseQua)[names(baseQua)=="V2"] <- "Position";
+    names(baseQua)[names(baseQua)=="V3"] <- "PhredScore";
+}
+
+```
+
+## Quality per Base for all files
+
+```{r echo=FALSE}
+if(file.exists(baseQualFile)){
+	p <- ggplot(baseQua,aes(x=Position, y=PhredScore))
+	p + geom_line(colour = "red")  + expand_limits(y = 0) + facet_wrap(~V1,ncol = 2)
+}else{
+	print("not calculated...");
+}
+```
+
+## Quality of all files
+```{r echo=FALSE}
+if(file.exists(baseQualFile)){
+summary(baseQua[3])
+
+}else{
+	print("not calculated...");
+}
+```
+***
+

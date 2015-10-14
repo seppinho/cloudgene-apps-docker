@@ -1,0 +1,256 @@
+name: Run Default Mode (Recommended)
+description:  Default mode shows the highest precision in our evaluation and is therefore highly recommended. This should should especially be used for IonTorrent data.
+version: 1.0.1
+website: 
+category: mtDNA
+
+cluster:
+
+  image: us-east-1/ami-da0cf8b3
+  type: m1.large,m1.xlarge
+  ports: 80,50030,50070
+  creationOnly: false
+  installMapred: true
+  initScript: install.sh
+  service: hadoop
+ 
+mapred:
+
+  setup:
+    name: Input Validator
+    jar: mtdna-heteroplasmy.jar
+    classname: heteroplasmy.validator.InputValidation
+
+  steps:
+ 
+#if( $inType == "se" || $inType == "pe")
+    - name: Align
+      jar: mtdna-heteroplasmy.jar
+      params: align --input $input --output $bwaOut --inType $inType --reference $reference
+
+    - name: Sort Bam
+      jar: mtdna-heteroplasmy.jar
+      params: sort --input $bwaOut --output $outputBam --inType $inType --statistics $stat.txt --local-output $localOutput
+#set( $input = $outputBam )
+#end
+
+    - name: Analyse BAM
+      classname: heteroplasmy.bamAnalyse.BamAnalyseTool
+      jar: mtdna-heteroplasmy.jar
+      generates: $analyseOut $statistics
+
+    - name: Detect Heteroplasmy
+      jar: mtdna-heteroplasmy.jar
+      params: detect --input $analyseOut $statistics --heteroLevel $heteroplasmy --outputRaw ${raw}.txt --outputFiltered ${heteroplasmies}.txt --outputIndel ${indels}.txt --topReadsHet $topReadsHet --minorReadsHet $minorReadsHet --covVariant $covVariant --outputHSD ${haplogrepInput}.hsd --reference $reference --LCR $lcr --contCheck $contCheck  --outputHSDCheck ${contaminationCheck}.hsd --outSummary ${summary}.txt --oneSideDel ${oneSideVar}.txt 
+
+#if( $reference == "rcrs")   
+    - name: Haplogroup Detection
+      jar: haplogrep.jar
+      params: --in ${haplogrepInput}.hsd --out ${haplogroups}.txt --phylotree 16
+#if( $contCheck == true)
+    - name: Haplogroup Contamination Check
+      jar: haplogrep.jar
+      params: --in ${contaminationCheck}.hsd --out ${haplogroupsCheck}.txt --phylotree 16
+#end
+    - name: Report Creation
+      rmd: report.Rmd
+      output: ${report}.html
+      params: ${raw}.txt ${heteroplasmies}.txt $heteroplasmy ${haplogroups}.txt $contCheck ${haplogroupsCheck}.txt ${summary}.txt $statistics
+#end
+
+  inputs:
+
+    - id: input
+      description: Input Files (FASTQ SE/PE, SAM/BAM) 
+      type: hdfs-folder
+
+    - id: inType
+      description: Input Format
+      type: list
+      required: true
+      values:
+        se: Fastq (Single-End)
+        pe: Fastq (Paired-End)
+        bam: SAM/BAM (rCRS aligned)
+      
+    
+    - id: reference
+      description: Reference
+      type: list
+      visible: false
+      values:
+        rcrs: rCRS
+        hg19: hg19 USCS
+        rsrs: RSRS
+      value: rcrs     
+
+    - id: heteroplasmy
+      description: Heteroplasmy Level in %
+      type: number
+      value: 1
+      visible: true
+      
+    - id: mapQuality
+      description: Min. Mapping quality
+      type: number
+      value: 20
+
+    - id: alignQuality
+      description: Min Alignment quality
+      visible: false
+      type: number
+      value: 30     
+      
+    - id: baseQuality
+      description: Min. Base quality
+      type: number
+      value: 20
+           
+    - id: topReadsHet
+      visible: false
+      description: Min #reads for major component used for heteroplasmy detection
+      type: number
+      value: 20
+           
+    - id: minorReadsHet
+      visible: false
+      description: Min #reads for minor component used for heteroplasmy detection
+      type: number
+      value: 5     
+                    
+    - id: covVariant
+      visible: false
+      description: Coverage to detect a variant
+      type: number
+      value: 20
+      
+    - id: lcr
+      description: Tag heteroplasmy in LCR
+      type: checkbox
+      visible: false
+      values:
+        true: true
+        false: false
+      value: true  
+      
+    - id: baq
+      description: BAQ?
+      type: checkbox
+      visible: false
+      values:
+        true: true
+        false: false
+      value: true
+      
+    - id: contCheck
+      description: Check for contamination?
+      type: checkbox
+      visible: false
+      values:
+        true: true
+        false: false
+      value: true
+
+    - id: fileSize
+      description: Filesize to upload
+      type: number
+      value: 204800
+      visible: false
+              
+  outputs:
+
+    - id: report
+      description: Heteroplasmy Interactive Report
+      type: local-file
+      download: true 
+   
+    - id: heteroplasmies
+      description: Detected Heteroplasmies 
+      type: local-file
+      download: true 
+
+    - id: indels
+      description: Deletions > 50 %
+      type: local-file
+      download: false 
+            
+    - id: haplogrepInput
+      description: Haplogrep Input File
+      type: local-file
+      download: false
+      
+    - id: haplogroups
+      description: Detected Haplogroups with HaploGrep
+      type: local-file
+      download: true
+      
+    - id: haplogroupsCheck
+      description: Detected Haplogroups Contamination with HaploGrep
+      type: local-file
+      download: false
+      
+    - id: contaminationCheck
+      description: Haplogrep Input File for Contamination Check
+      type: local-file
+      download: false
+
+    - id: summary
+      description: Summary per Sample
+      type: local-file
+      download: false
+
+    - id: oneSideVar
+      description: One Strand Variations
+      type: local-file
+      download: true
+
+    - id: raw
+      description: Raw Data
+      type: local-file
+      download: true  
+      zip: true
+ 
+    - id: outputBam
+      description: BAM files
+      type: hdfs-folder
+      download: false
+      temp: true
+      zip: false
+      mergeOutput: false
+      
+    - id: statistics
+      description: BAM Statistics
+      type: hdfs-folder
+      download: false
+      temp: true
+      mergeOutput: true
+      removeHeader: false
+      zip: false
+      autoExport: true
+      
+    - id: bwaOut
+      description: BWA-MEM out
+      type: hdfs-folder
+      removeHeader: false
+      download: false
+      temp: true
+
+    - id: stat.txt
+      description: Output Statistics
+      removeHeader: false
+      type: local-file
+      download: false
+      temp: true
+
+    - id: localOutput
+      description: BAM Files
+      type: local-folder
+      download: false
+      temp: true
+
+    - id: analyseOut
+      description: Heteroplasmy
+      type: hdfs-folder
+      removeHeader: false
+      download: false
+      temp: true

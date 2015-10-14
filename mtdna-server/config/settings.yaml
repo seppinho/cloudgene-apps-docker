@@ -1,0 +1,33 @@
+!cloudgene.mapred.util.Settings
+name: mtDNA-Server
+apps:
+- !cloudgene.mapred.util.Application
+   id: mtdna-low
+   filename: apps/mtdna-server/mtdna-default.yaml
+   permission: user
+- !cloudgene.mapred.util.Application
+   id: mtdna-high
+   filename: apps/mtdna-server/mtdna-hq.yaml
+   permission: user
+- !cloudgene.mapred.util.Application
+   id: mtdna-expert
+   filename: apps/mtdna-server/mtdna-expert.yaml
+   permission: user
+- !cloudgene.mapred.util.Application
+   id: mtdna-qc
+   filename: apps/mtdna-server/mtdna-qc.yaml
+   permission: user
+hadoopPath: /usr
+hdfsWorkspace: cloudgene-workspace-hdfs
+localWorkspace: cloudgene-workspace-local
+mail:
+   port:
+   smtp:
+   name:
+   password:
+   user:
+notificationAfter: 3
+removeHdfsWorkspace: true
+retireAfter: 5
+streaming: false
+streamingJar: /usr/contrib/streaming/hadoop-streaming-2.6.0-cdh5.4.1.jar

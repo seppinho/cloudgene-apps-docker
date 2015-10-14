@@ -1,0 +1,234 @@
+---
+title: "mtDNA-Server Final Report"
+output:
+  html_document:
+    toc: true
+    theme: default
+    toc_depth: 2
+---
+<style type="text/css">
+.alert {
+  padding: 8px 35px 8px 14px;
+  margin-bottom: 20px;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+  background-color: #fcf8e3;
+  border: 1px solid #fbeed5;
+  -webkit-border-radius: 4px;
+     -moz-border-radius: 4px;
+          border-radius: 4px;
+}
+
+.alert-success {
+  color: #468847;
+  background-color: #dff0d8;
+  border-color: #d6e9c6;
+}
+
+.alert-neutral {
+  color: #6a7b8d;
+  background-color: #ddebf9;
+  border-color: #aabccf;
+}
+
+.alert-error {
+  color: #b94a48;
+  background-color: #f2dede;
+  border-color: #eed3d7;
+}
+</style>
+
+## mtDNA-Server Report -  <a href="http://genepi.i-med.ac.at">Genetic Epidemiology Innsbruck</a>  
+### Version 1.0.1 - Feel free to contact <a href="http://mtdna-server.uibk.ac.at/start.html#!pages/contact">us</a> in case of problems!
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, fig.width=12, fig.height=10}
+
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(knitr))
+
+
+args <- commandArgs(trailingOnly = TRUE)
+
+
+data = read.table(args[1], header = TRUE, sep="\t");
+data25<- data[seq(1, nrow(data), 25),]
+data25<-data25[c(1,2,8,9)]
+hetero = read.table(args[2], header = TRUE, sep="\t");
+
+if(nrow(hetero)>0){
+hetero$MAJOR.MINOR<-with(hetero, paste(hetero[,4],"/",hetero[,5], sep=""))
+hetero$COVERAGE<-with(hetero, paste(hetero[,8],"/",hetero[,9]))
+}
+
+count <-as.data.frame(table(hetero$ID));
+names(count)[names(count)=="Var1"] <- "Sample";
+summary<-read.table(args[7], header = TRUE, sep="\t");
+bamstatistics<-read.table(args[8], header = TRUE, sep="\t");
+```
+
+### BAM Statistics
+Initial quality check if the selected base-quality is sufficient. It further displays all samples with a suspicious amount of heteroplasmies.
+```{r echo=FALSE, results='asis'}
+if (bamstatistics[9,1]/bamstatistics[8,1]>0.5) {cat("<div class='alert alert-error'><b>Warning</b>: Over 50 % of the bases are filtered. Please use results with caution and use the provided Preprocessing Pipeline! </div>")}else{cat("<div class='alert alert-success'>Selected per-base quality: <b>OK</b></div>")}
+for(i in 1:nrow(summary)){if(summary[i,10]>20){cat(paste("<div class='alert alert-error'>An suspicious amount of heteroplasmies (>20 sites) have been detected. Please recheck ",summary[i,1],". Have a look at our Post-Processing Guidelines (Help) for data verification.</div>"))}}
+```
+
+### Heteroplasmy Table
+This interactive table shows the detected heteroplasmic sites per sample. The heteroplasmy level (HET.LEVEL) always displays the percentage of the minor component.
+```{r echo=FALSE, results='asis'}
+if(nrow(hetero)>0){
+		kable(hetero[,c(1,2,3,11,29,30,10,22)], "html", table.attr = "id=\"hetero_table\"",caption = "TYPE: 1 = reliable heteroplasmy; 2 = Heteroplasmy in low complexity region (LCR); 3 = Major/Minor component are swapped for forward and reverse strand") 
+} else{
+	cat("<div class='alert alert-neutral'>No heteroplasmic sites found!</div>")
+	}
+
+```
+
+<!-- DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="http://cdn.datatables.net/1.10.2/css/jquery.dataTables.css">
+  
+<!-- jQuery -->
+<script type="text/javascript" charset="utf8" src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+  
+<!-- DataTables -->
+<script type="text/javascript" charset="utf8" src="http://cdn.datatables.net/1.10.2/js/jquery.dataTables.js"></script>
+
+<script type="text/javascript">
+  $(document).ready(function() {
+  	$('#hetero_table').DataTable();
+	} );
+</script>
+
+### Heteroplasmy Frequency Table
+This table represents heteroplasmic sites with frequency >= 2. If a position shows up in too many samples, it could be the result of artifacts and needs to be re-checked!
+```{r echo=FALSE, results='asis'}
+if(nrow(hetero)>0){
+a<-rle(sort(hetero$POS)) 
+b<-data.frame(Position=a$values, Frequency=a$length)
+if (nrow(b[b$Frequency>=2,])>=2){
+kable(b[b$Frequency>=2,], "html", row.names=FALSE, table.attr = "id=\"hetero_freq\"",caption="")
+}else{cat("<div class='alert alert-neutral'>No shared heteroplasmic sites over samples have been detected</div>")}}
+```
+<!-- DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="http://cdn.datatables.net/1.10.2/css/jquery.dataTables.css">
+  
+<!-- jQuery -->
+<script type="text/javascript" charset="utf8" src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+  
+<!-- DataTables -->
+<script type="text/javascript" charset="utf8" src="http://cdn.datatables.net/1.10.2/js/jquery.dataTables.js"></script>
+
+<script type="text/javascript">
+  $(document).ready(function() {
+  	$('#hetero_freq').DataTable();
+	} );
+</script>
+
+```{r, echo=FALSE, results='asis'}
+if(nrow(hetero)>0)
+{cat("<h3>Heteroplasmy Levels per Sample</h3>")}
+```
+```{r echo=FALSE, fig.width=12, fig.height=10}
+if(nrow(hetero)>0)
+{ggplot() + geom_boxplot(data=subset(hetero, TYPE==1), mapping=aes(x=ID, y=HET.LEVEL, color=ID)) + theme(legend.position = "none") + theme(axis.text.x=element_text(angle=+90))} 
+```
+```{r, echo=FALSE, results='asis'}
+if(nrow(hetero)>0)
+{cat("<center>Fig.1: Heteroplasmy level per sample. </center>")
+cat("<h3>Heteroplasmy Frequencies per Sample</h3>")}
+```
+```{r echo=FALSE, fig.width=12, fig.height=10}
+if(nrow(count)>0){ggplot(count, aes(x=Sample, y=Freq)) + geom_bar(fill="cyan4", stat='identity') + theme(axis.text.x=element_text(angle=+90))}
+```
+```{r, echo=FALSE, results='asis'}
+if(nrow(hetero)>0){
+cat("<center>Fig.2: Heteroplasmic sites per sample.</center>")
+cat("<h3>Heteroplasmy per Region over all Samples</h3>")
+cat("<p>Amount of heteroplasmic sites grouped according their loci on the mitochondrial genome.</p>")
+}
+```
+```{r echo=FALSE, fig.width=12, fig.height=10, results='asis'}
+if(nrow(hetero)>0){
+m1 <- as.vector(hetero$MapLocus)
+m2 <- as.vector(c('MT-DLOOP2','MT-TF','MT-RNR1','MT-TV','MT-RNR2','MT-TL1','MT-ND1','MT-TI','MT-TQ','MT-TM','MT-ND2','MT-TW','MT-TA','MT-TN','MT-TC','MT-TY','MT-CO1','MT-TS1','MT-TD','MT-CO2','MT-TK','MT-ATP8','MT-ATP6','MT-CO3','MT-TG','MT-ND3','MT-TR','MT-ND4L','MT-ND4','MT-TH','MT-TS2','MT-TL2','MT-ND5','MT-ND6','MT-TE','MT-CYB','MT-TT','MT-TP','MT-DLOOP1', ' '))
+mapl<-as.data.frame(table(c(m1,m2)))
+names(mapl)[names(mapl)=="Var1"] <- "Locus"
+mapl$Freq<-mapl$Freq-1
+ggplot() +  geom_bar(data=mapl, mapping=aes(x=Locus, y=Freq, fill=Locus), stat='identity') + theme(axis.text.x=element_text(angle=+90)) + theme(legend.position = "none")
+}
+```
+```{r, echo=FALSE, results='asis'}
+if(nrow(hetero)>0)
+cat("<center>Fig.3: Heteroplasmic sites grouped according their loci on the mitochondrial genome. </center>");
+```
+
+### Haplogroups Interactive Table
+Detected haplogroups using <a href="http://haplogrep.uibk.ac.at">Haplogrep</a> based on Phylotree 16. Several coverage values, the average heteroplasmy level (HET.LEVEL) and the amount of detected heteroploasmies (HET.COUNT) are displayed.  
+```{r echo=FALSE, results='asis', results='asis'}
+haplo<-subset(read.delim(file = args[4], header=FALSE, as.is = TRUE)[1:4], select = c(V1, V3, V4))
+colnames(haplo) = haplo[1, ]
+haplo = haplo[-1, ]
+row.names(haplo) <- NULL
+haplo<-merge(haplo, summary, by.x="SampleID", by.y="ID", all.x=TRUE)
+kable(haplo[, c(1,2,3,4,5,9,10,11,12)], "html", table.attr = "id=\"haplo_table\"")
+
+```
+### Haplogroup Potential Contamination / Haplogroup Conflicts
+A sample is listed as a <b> possible contamination</b>, if the major and minor haplogroup of the sample differ. 
+Always verify the contamination by checking the phylogenetic distance of the two haplogroups using <a href="http://www.phylotree.org/tree/main.html">Phylotree</a>.
+
+```{r echo=FALSE, results='asis'}
+
+check<-args[5]
+if(check)
+{
+haplogroupsCheck<-subset(read.delim(file = args[6], header=FALSE, as.is = TRUE)[1:4], select = c(V1,V3, V4))
+colnames(haplogroupsCheck) = haplogroupsCheck[1, ]
+haplogroupsCheck = haplogroupsCheck[-1, ]
+row.names(haplogroupsCheck) <- NULL
+df = data.frame(ID = character(), Haplogroup = character(), HaploMajor = character(), HaploMinor = character())
+for(i in seq(1, nrow(haplogroupsCheck), 3)){
+    if (as.character(haplogroupsCheck[i+2,2])!=as.character(haplogroupsCheck[i+1,2])){
+        newRow <- data.frame(SampleId=as.character(haplogroupsCheck[i,1]), Haplogroup=as.character(haplogroupsCheck[i,2]), HaploMajor=as.character(haplogroupsCheck[i+1,2]), HaploMinor=as.character(haplogroupsCheck[i+2,2]))
+    df<-rbind(df, newRow)}
+    }
+if(nrow(df)>0){kable(df[,c(1,2,3,4)], "html", table.attr = "id=\"haploCheck_table\"")}else{cat("<div class='alert alert-success'>no haplogroup based contamination detected</div>")}
+}
+```
+### Coverage per Sample
+```{r echo=FALSE, fig.width=5.5, fig.height=4, result='asis'}
+
+
+max<-max((data25[3])+(data25[4]))
+library(ggplot2)
+library(data.table)
+s<-split(data25, data25$ID)
+meanCov<-mean(data25$COV.FWD+data25$COV.REV)
+for( i in 1:length(s)) {
+  print(ggplot(rbindlist(s[i])) +  geom_line(aes(x= POS, y = COV.FWD+COV.REV), colour="#E69F00")  + geom_hline(aes(yintercept=mean(COV.FWD+COV.REV)), colour="#0072B2", linetype="dashed")+ geom_hline(aes(yintercept=meanCov), colour="#7200B2", linetype="dashed") + xlab("mtDNA position") + ylab("Coverage") + ylim(c(0, max)) +ggtitle(names(s)[i]) )
+}
+
+```
+Fig.4: Coverage per Sample -  Dotted line 'purple': mean coverage over all analysed samples - Dotted line 'turquoise': mean coverage for this specific sample
+
+
+<!-- DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="http://cdn.datatables.net/1.10.2/css/jquery.dataTables.css">
+  
+<!-- jQuery -->
+<script type="text/javascript" charset="utf8" src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+  
+<!-- DataTables -->
+<script type="text/javascript" charset="utf8" src="http://cdn.datatables.net/1.10.2/js/jquery.dataTables.js"></script>
+
+<script type="text/javascript">
+  $(document).ready(function() {
+  	$('#haplo_table').DataTable();
+	} );
+	
+  $(document).ready(function() {
+  	$('#haploCheck_table').DataTable();
+	} );	
+
+</script>
+
+

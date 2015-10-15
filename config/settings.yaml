@@ -4,7 +4,7 @@ apps:
   - id: wordcount
     permission: user
     filename: applications/wordcount/wordcount-mr-step.yaml
-  -  id: mtdna-low
+  - id: mtdna-low
     filename: applications/mtdna-server/mtdna-default.yaml
     permission: user
 hadoopPath: /usr

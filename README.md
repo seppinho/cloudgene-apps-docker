@@ -1,4 +1,4 @@
 # Cloudgene Apps
 
 This repository includes all currently available Cloudgene Docker Apps. 
-Check out the [Cloudgene-Docker repository](https://github.com/seppinho/cloudgene-docker) for installing apps and running Hadoop jobs graphically.
+Check out [Cloudgene Docker](https://github.com/seppinho/cloudgene-docker) to install apps and run these Hadoop apps graphically.

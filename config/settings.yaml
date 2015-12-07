@@ -7,6 +7,9 @@ apps:
   - id: mtdna-low
     filename: applications/mtdna-server/mtdna-default.yaml
     permission: user
+  - id: spark-wrodcount
+    filename: applications/wordcount/wordcount-spark.yaml
+    permission: user
 hadoopPath: /usr
 hdfsWorkspace: cloudgene-workspace-hdfs
 localWorkspace: cloudgene-workspace-local

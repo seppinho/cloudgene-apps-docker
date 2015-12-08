@@ -1,0 +1,45 @@
+name: GATK Spark
+description:  Integrates Spark-WordCount (https://github.com/sryza/simplesparkapp) into Cloudgene.
+version: 1.0
+website: https://github.com/sryza/simplesparkapp
+category: Genepi Hadoop Examples
+
+
+cluster:
+
+  image: us-east-1/ami-da0cf8b3
+  type: m1.large,m1.xlarge
+  ports: 80,50030,50070
+  creationOnly: false
+  installMapred: true
+  initScript: install.sh
+  service: hadoop
+ 
+
+mapred:
+
+  steps:
+
+  - name: GATK Alpha
+    spark: gatk-all-4.pre-alpha-204-gb7be0f5-SNAPSHOT-spark.jar
+    mainClass: org.broadinstitute.hellbender.tools.spark.pipelines.CountReadsSpark
+    params: $input $output --conf spark.driver.userClassPathFirst=true --conf spark.executor.userClassPathFirst=true --conf    spark.io.compression.codec=lzf 
+
+
+  inputs:
+
+    - id: input
+      description: Input
+      type: hdfs-folder
+      
+  outputs:
+     
+    - id: output
+      description: Output
+      type: hdfs-folder
+      removeHeader: false
+      download: true
+      temp: true
+      zip: false
+      mergeOutput: true
+

@@ -10,6 +10,9 @@ apps:
   - id: spark-wrodcount
     filename: applications/wordcount/wordcount-spark.yaml
     permission: user
+  - id: gatk
+    filename: applications/gatk-spark/gatk-alpha.yaml
+    permission: user
 hadoopPath: /usr
 hdfsWorkspace: cloudgene-workspace-hdfs
 localWorkspace: cloudgene-workspace-local

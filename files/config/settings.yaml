@@ -1,17 +1,8 @@
 !cloudgene.mapred.util.Settings
 name: Cloudgene WFS
 apps:
-  - id: wordcount
-    permission: user
-    filename: applications/cloudgene-apps-docker/wordcount/wordcount-mr-step.yaml
   - id: mtdna-low
     filename: applications/cloudgene-apps-docker/mtdna-server/mtdna-default.yaml
-    permission: user
-  - id: spark-wrodcount
-    filename: applications/cloudgene-apps-docker/wordcount/wordcount-spark.yaml
-    permission: user
-  - id: gatk
-    filename: applications/cloudgene-apps-docker/gatk-spark/gatk-alpha.yaml
     permission: user
 hadoopPath: /usr
 hdfsWorkspace: cloudgene-workspace-hdfs

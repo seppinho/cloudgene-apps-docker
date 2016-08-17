@@ -1,6 +1,6 @@
-name: Run Default Mode (Recommended)
-description:  Default mode shows the highest precision in our evaluation and is therefore highly recommended. This should should especially be used for IonTorrent data.
-version: 1.0.1
+name: mtDNA-Server
+description: 
+version: 1.0.6
 website: 
 category: mtDNA
 
@@ -21,12 +21,17 @@ mapred:
     jar: mtdna-heteroplasmy.jar
     classname: heteroplasmy.validator.InputValidation
 
+  onFailure:
+    name: Send Notification on Failure
+    jar: mtdna-heteroplasmy.jar
+    classname: heteroplasmy.validator.FailureNotification
   steps:
  
 #if( $inType == "se" || $inType == "pe")
     - name: Align
+      classname: heteroplasmy.aligning.AlignTool
       jar: mtdna-heteroplasmy.jar
-      params: align --input $input --output $bwaOut --inType $inType --reference $reference
+      generates: $bwaOut
 
     - name: Sort Bam
       jar: mtdna-heteroplasmy.jar
@@ -41,27 +46,29 @@ mapred:
 
     - name: Detect Heteroplasmy
       jar: mtdna-heteroplasmy.jar
-      params: detect --input $analyseOut $statistics --heteroLevel $heteroplasmy --outputRaw ${raw}.txt --outputFiltered ${heteroplasmies}.txt --outputIndel ${indels}.txt --topReadsHet $topReadsHet --minorReadsHet $minorReadsHet --covVariant $covVariant --outputHSD ${haplogrepInput}.hsd --reference $reference --LCR $lcr --contCheck $contCheck  --outputHSDCheck ${contaminationCheck}.hsd --outSummary ${summary}.txt --oneSideDel ${oneSideVar}.txt 
+      params: detect --input $analyseOut $statistics --heteroLevel $heteroplasmy --outputRaw ${raw}.txt --outputFiltered ${heteroplasmies}.txt --outputIndel ${indels}.txt --topReadsHet $topReadsHet --minorReadsHet $minorReadsHet --covVariant $covVariant --outputHSD ${haplogrepInput}.hsd --reference $reference --LCR $lcr --contCheck $contCheck  --outputHSDCheck ${contaminationCheck}.hsd --outSummary ${summary}.txt --variants ${variants}.txt 
 
-#if( $reference == "rcrs")   
     - name: Haplogroup Detection
       jar: haplogrep.jar
       params: --in ${haplogrepInput}.hsd --out ${haplogroups}.txt --phylotree 16
-#if( $contCheck == true)
+
     - name: Haplogroup Contamination Check
       jar: haplogrep.jar
       params: --in ${contaminationCheck}.hsd --out ${haplogroupsCheck}.txt --phylotree 16
-#end
+
     - name: Report Creation
-      rmd: report.Rmd
+      rmd2: report.Rmd
       output: ${report}.html
-      params: ${raw}.txt ${heteroplasmies}.txt $heteroplasmy ${haplogroups}.txt $contCheck ${haplogroupsCheck}.txt ${summary}.txt $statistics
-#end
+      params: ${raw}.txt ${heteroplasmies}.txt ${haplogroups}.txt ${haplogroupsCheck}.txt ${summary}.txt ${variants}.txt 
+
+    - name: Sending Mail
+      jar: mtdna-heteroplasmy.jar
+      classname: heteroplasmy.encryption.CompressionEncryption
 
   inputs:
 
     - id: input
-      description: Input Files (FASTQ SE/PE, SAM/BAM) 
+      description: Input Files (FASTQ SE/PE, SAM/BAM) <br><br>or use the <a href="/index.html#!pages/upload-tool">Upload-Tool</a>
       type: hdfs-folder
 
     - id: inType
@@ -69,9 +76,9 @@ mapred:
       type: list
       required: true
       values:
-        se: Fastq (Single-End)
-        pe: Fastq (Paired-End)
-        bam: SAM/BAM (rCRS aligned)
+        se: Fastq Single-End
+        pe: Fastq Paired-End
+        bam: SAM/BAM
       
     
     - id: reference
@@ -80,20 +87,19 @@ mapred:
       visible: false
       values:
         rcrs: rCRS
-        hg19: hg19 USCS
-        rsrs: RSRS
       value: rcrs     
 
     - id: heteroplasmy
       description: Heteroplasmy Level in %
       type: number
       value: 1
-      visible: true
+      visible: false
       
     - id: mapQuality
       description: Min. Mapping quality
       type: number
       value: 20
+      visible: false
 
     - id: alignQuality
       description: Min Alignment quality
@@ -105,6 +111,7 @@ mapred:
       description: Min. Base quality
       type: number
       value: 20
+      visible: false
            
     - id: topReadsHet
       visible: false
@@ -122,7 +129,7 @@ mapred:
       visible: false
       description: Coverage to detect a variant
       type: number
-      value: 20
+      value: 10
       
     - id: lcr
       description: Tag heteroplasmy in LCR
@@ -154,13 +161,19 @@ mapred:
     - id: fileSize
       description: Filesize to upload
       type: number
-      value: 204800
+      value: 5000
       visible: false
               
+    - id: submissionSource
+      description: submission source
+      type: text
+      value: web
+      visible: false
+
   outputs:
 
     - id: report
-      description: Heteroplasmy Interactive Report
+      description: mtDNA-Server Interactive Report
       type: local-file
       download: true 
    
@@ -169,15 +182,20 @@ mapred:
       type: local-file
       download: true 
 
+    - id: variants
+      description: Detected Homoplasmies 
+      type: local-file
+      download: true
+
     - id: indels
       description: Deletions > 50 %
       type: local-file
       download: false 
             
     - id: haplogrepInput
-      description: Haplogrep Input File
+      description: HaploGrep Input File
       type: local-file
-      download: false
+      download: true
       
     - id: haplogroups
       description: Detected Haplogroups with HaploGrep
@@ -197,15 +215,10 @@ mapred:
     - id: summary
       description: Summary per Sample
       type: local-file
-      download: false
-
-    - id: oneSideVar
-      description: One Strand Variations
-      type: local-file
       download: true
 
     - id: raw
-      description: Raw Data
+      description: Raw Pileup File
       type: local-file
       download: true  
       zip: true
@@ -254,3 +267,4 @@ mapred:
       removeHeader: false
       download: false
       temp: true
+

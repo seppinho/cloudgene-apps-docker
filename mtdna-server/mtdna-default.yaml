@@ -161,7 +161,7 @@ mapred:
     - id: fileSize
       description: Filesize to upload
       type: number
-      value: 5000
+      value: 0
       visible: false
               
     - id: submissionSource

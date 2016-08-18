@@ -57,7 +57,7 @@ mapred:
       params: --in ${contaminationCheck}.hsd --out ${haplogroupsCheck}.txt --phylotree 16
 
     - name: Report Creation
-      rmd2: report.Rmd
+      rmd: report.Rmd
       output: ${report}.html
       params: ${raw}.txt ${heteroplasmies}.txt ${haplogroups}.txt ${haplogroupsCheck}.txt ${summary}.txt ${variants}.txt 
 

@@ -1,4 +1,4 @@
-POS	Reference allele (rCRS)	# of alternative NUMTs allele (substitution)	# of alternative NUMTs allele (substitution+indel)	A	T	C	G	deletion	insertion		NUMTs present the variant	luki_tab	
+POS	Reference allele (rCRS)	# of alternative NUMTs allele (substitution)	# of alternative NUMTs allele (substitution+indel)	A	T	C	G	deletion	insertion		NUMTs present the variant	
 7	A	1	1	0	0	0	1	0	0	1	chr17:22020727-22020961	
 15	C	1	1	0	1	0	0	0	0	1	chr17:22020727-22020961	
 26	C	1	1	0	1	0	0	0	0	1	chr17:22020727-22020961	

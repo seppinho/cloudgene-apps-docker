@@ -60,7 +60,7 @@ if(nrow(hetero)>0){
 ## Detected Homoplasmies
 
 
-This interactive table shows the detected variant sites per sample. The column AAC represents the Amino Acid Change, the <a href="http://mutpred.mutdb.org/about.html">MutPred Score</a> (0-1 where values >0.5 are considered harmful and > 0.75 considered highly harmful) and <a href="http://www.sciencedirect.com/science/article/pii/S000292971100098X">mtDNA Selection Score</a> (values < 1 indicate weak or no harming effects) are pathogenicity scores. The HaploGrep scores (n.d.; 1-10) indicate if the variant is present in the current Phylotree (1-10) otherwise (n.d.). The closer the value to 1, the higher it is fluctuating, and the closer to 10 (indicating it is only presented in one branch in Phylotree, rendering it more stable). Details to be found in the <a href="http://nar.oxfordjournals.org/content/44/W1/W58/suppl/DC1">Supplemental Material</a> of the HaploGrep2 Paper.  
+This interactive table shows the detected variant sites per sample. 
 
 ```{r echo=FALSE, results='asis'}
 variants$definingHG <- NULL
@@ -175,7 +175,7 @@ if(nrow(hetero)>0){
 
 ```{r echo=FALSE, fig.width=12, fig.height=10}
 if(nrow(hetero)>0){
-	ggplot() + geom_boxplot(data=hetero, mapping=aes(x=ID, y=HET.LEVEL, color=ID)) + theme(legend.position = "none") + theme(axis.text.x=element_text(angle=+90))
+	ggplot() + geom_boxplot(data=subset(hetero, TYPE==1), mapping=aes(x=ID, y=HET.LEVEL, color=ID)) + theme(legend.position = "none") + theme(axis.text.x=element_text(angle=+90))
 } 
 ```
 

@@ -1,0 +1,53 @@
+name: iEACT
+description: 
+version:
+website: 
+category:
+
+cluster:
+
+  image: us-east-1/ami-da0cf8b3
+  type: m1.large,m1.xlarge
+  ports: 80,50030,50070
+  creationOnly: false
+  installMapred: true
+  initScript: install.sh
+  service: hadoop
+ 
+mapred:
+
+  steps:
+
+    - name: Report Creation
+      rmd2: ieact.Rmd
+      output: ${report}.html
+      params: $input $input2 $input3 $output
+
+
+  inputs:
+
+    - id: input
+      description: bed file
+      type: local-file
+
+    - id: input2
+      description: bim file
+      type: local-file
+
+    - id: input3
+      description: fam file
+      type: local-file
+
+  outputs:
+
+    - id: report
+      description: iEACT Report
+      type: local-file
+      download: true 
+   
+    - id: output
+      description: Output Statistics
+      removeHeader: false
+      type: local-file
+      download: true
+      temp: false

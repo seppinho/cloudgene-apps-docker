@@ -1,0 +1,41 @@
+---
+title: "iEACT"
+output: html_document
+---
+
+## iEACT Results
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, fig.width=12, fig.height=10}
+suppressPackageStartupMessages(library(SKAT))
+suppressPackageStartupMessages(library(iECAT))
+
+#args = c();
+#args[1] = "/opt/cloudgene-latest/apps/iecat/iECAT.example.bed";
+#args[2] = "/opt/cloudgene-latest/apps/iecat/iECAT.example.bim";
+#args[3] = "/opt/cloudgene-latest/apps/iecat/iECAT.example.fam";
+
+
+args <- commandArgs(trailingOnly = TRUE)
+
+File.Bed<-args[1]
+File.Bim<-args[2]
+File.Fam<-args[3]
+
+File.EC<-"/opt/cloudgene-latest/apps/iecat/iECAT.example.EC"
+File.SetID<-"/opt/cloudgene-latest/apps/iecat/iECAT.example.SetID"
+File.SSD<-"/opt/cloudgene-latest/apps/iecat/iECAT.SSD"
+File.Info<-"/opt/cloudgene-latest/apps/iecat/iECAT.SSD.INFO"
+File.EC.Info<-"/opt/cloudgene-latest/apps/iecat/iECAT.SSD.ECINFO"
+FAM<-Read_Plink_FAM(File.Fam, Is.binary=TRUE)
+ Generate_SSD_SetID_wEC(File.Bed, File.Bim, File.Fam, File.SetID, File.EC, File.SSD, File.Info, File.EC.Info)
+EC.INFO= Open_SSD_wEC(File.SSD, File.Info, File.EC.Info)
+
+
+obj<-SKAT_Null_Model(Phenotype ~ 1, out_type="D", data=FAM)
+re<-iECAT.SSD.All(EC.INFO, obj=obj, method="optimal")
+
+sink(args[4])
+re
+sink()
+
+```

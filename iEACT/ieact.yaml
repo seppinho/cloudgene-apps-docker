@@ -1,40 +1,30 @@
 name: iEACT
-description: 
-version:
-website: 
+description: Functions for single-variant and region-based tests with external control samples. These methods use external study samples as control samples with adjusting for possible batch effects.
+version: 0.8
+website: https://github.com/leeshawn/iECAT
 category:
-
-cluster:
-
-  image: us-east-1/ami-da0cf8b3
-  type: m1.large,m1.xlarge
-  ports: 80,50030,50070
-  creationOnly: false
-  installMapred: true
-  initScript: install.sh
-  service: hadoop
  
 mapred:
 
   steps:
 
-    - name: Report Creation
+    - name: iEACT
       rmd2: ieact.Rmd
       output: ${report}.html
-      params: $input $input2 $input3 $output
+      params: $bed $bim $fam ${output}.txt
 
 
   inputs:
 
-    - id: input
+    - id: bed
       description: bed file
       type: local-file
 
-    - id: input2
+    - id: bim
       description: bim file
       type: local-file
 
-    - id: input3
+    - id: fam
       description: fam file
       type: local-file
 
